@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDINT
+  TEACHER
+}
+
+
+enum bootCampRole {
+  C_SHARP     @map("C#")
+  JAVA
+  FULL_STACK  @map("FullStack")
+  GO
+  C_PLUS_PLUS @map("C++")
+  Data_Science @map("Data Science")
+}
+enum Status {
+  REVIEW
+  APPROVED
+  NOT_APPROVED @map("Not Approved")
+}
+
+model User {
+  id         Int       @id @default(autoincrement())
+  username   String    @unique
+  email      String    @unique
+  password   String
+  isOnline   Boolean   @default(false)
+  role       Role      @default(STUDINT)
+  createdAt  DateTime  @default(now())
+  profile    Profile?
+  studint    Studint?
+  teacher    Teacher?
+
+  // 💬 Inverse relations for messages
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+}
+
+
+model Profile {
+  id            Int     @id @default(autoincrement())
+  firstName     String
+  lastName      String
+  userId        Int     @unique
+  cellPhone     String?
+  city          String?
+  currentStatus Status
+  state         String?
+  zipCode       String?
+  user          User    @relation(fields: [userId], references: [id])
+}
+
+model Studint {
+  id           Int           @id @default(autoincrement())
+  status       Status        @default(REVIEW)
+  comments     String?
+  userId       Int           @unique
+  user         User          @relation(fields: [userId], references: [id])
+  reviews      Review[]      // Reviews given by teachers
+}
+
+
+model Teacher {
+  id       Int      @id @default(autoincrement())
+  userId   Int      @unique
+  user     User     @relation(fields: [userId], references: [id])
+  reviews  Review[] // 👈 One-to-many: reviews given to students
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String
+  createdAt  DateTime @default(now())
+  senderId   Int
+  receiverId Int
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+}
+
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  studentId  Int
+  teacherId  Int
+  grade      Float
+  comments   String?
+  createdAt  DateTime @default(now())
+
+  student    Studint  @relation(fields: [studentId], references: [id])
+  teacher    Teacher  @relation(fields: [teacherId], references: [id])
+
+  @@unique([studentId, teacherId]) // One teacher can't review same student twice
+}
+
