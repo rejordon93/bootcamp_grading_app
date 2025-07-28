@@ -20,13 +20,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ✅ Set isOnline to true
+    //Set isOnline to true
     await prisma.user.update({
       where: { email: normalizedEmail },
       data: { isOnline: true },
     });
 
-    // ✅ Validate password
+    // Validate password
     const validPassword = await bcryptjs.compare(password, user.password);
     if (!validPassword) {
       return NextResponse.json({ error: "Invalid password" }, { status: 400 });
@@ -36,14 +36,14 @@ export async function POST(req: NextRequest) {
       throw new Error("TOKEN_SECRET is not defined");
     }
 
-    // ✅ Create JWT token
+    //  Create JWT token
     const token = jwt.sign(
       { id: user.id, email: user.email },
       process.env.TOKEN_SECRET,
       { expiresIn: "1d" }
     );
 
-    // ✅ Set cookie
+    //  Set cookie
     // sending data to  role frontend!
     const response = NextResponse.json({
       message: "Login successful",
